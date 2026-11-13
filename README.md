@@ -73,21 +73,3 @@ r = requests.post("http://127.0.0.1:8000/webhook", data=body,
 print(r.status_code, r.text)
 ```
 
-## Deployment outline
-1. Create a Supabase PostgreSQL project and set `DATABASE_URL` on Render.
-2. Deploy `backend/` as a Render Web Service. Build command: `pip install -r requirements.txt`; start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`.
-3. Set backend environment variables on Render: `DATABASE_URL`, `GROQ_API_KEY`, `GROQ_MODEL`, `WEBHOOK_SECRET`, `JWT_SECRET`, `ACCESS_TOKEN_MINUTES`, `CORS_ORIGINS`, `AGENT_EMAIL`, `AGENT_PASSWORD`.
-4. Run `python seed_agent.py` once against the deployed database (use Render Shell or a one-off job).
-5. Deploy the Streamlit app from the `frontend/` directory using Streamlit Community Cloud. Set `API_BASE_URL` in its secrets/settings to the Render URL.
-6. Test the deployed webhook and complete customer-to-agent approval flow.
-
-## Important notes and limitations
-- Configure a Groq model that is currently enabled for your account; model availability changes.
-- The local default database is SQLite for easy setup. Use PostgreSQL in deployment.
-- This is a compact assessment starter, not a hardened multi-tenant production service. Before real production use, add database migrations, rate limiting, structured logs/monitoring, robust retry/background jobs, CSRF/session hardening, agent account provisioning controls, and tenant isolation.
-- The webhook persists inbound messages before AI generation; failed AI drafts remain visible to agents for retry.
-- No real WhatsApp integration or outbound message sending is implemented, as the assessment does not require it.
-
-## Assessment README answers (adapt after implementation)
-1. If processing fails overnight, the inbound message is persisted before AI generation. The draft is marked failed with an error so the agent can see the conversation and retry; production monitoring and alerting should notify the team.
-2. For 20 brands, add a brands table and enforce `brand_id` scoping across customers, conversations, agents and knowledge bases, ideally with database-level row security and tenant-aware authorization. This starter includes a `brand_id` on conversations but does not yet implement full tenant isolation.
